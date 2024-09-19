@@ -5,7 +5,10 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,59 +50,64 @@ public class DgMarketAutomationTest {
 
             boolean hasNextPage = true;
 
-            while (hasNextPage) {
+            List<WebElement> nextButton = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//img[@class='toppg_forward_active']")));
+            System.out.println("Next Button size: " + nextButton.size());
+//            if (nextButton.size() > 0 && nextButton.get(0).isEnabled()) {
+//                System.out.println("Next button is clicked.");
+//                nextButton.get(0).click();
+//            } else {
+//                hasNextPage = false;
+//            }
+            for (int page = 0; page < nextButton.size(); page++) {
 
-                List<WebElement> titles = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("div.ln_notice_title a")));
-                System.out.println("Size of titles: " + titles.size());
-                for (int i = 0; i < titles.size(); i++) {
+                try {
+                    List<WebElement> titles = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("div.ln_notice_title a")));
+                    System.out.println("Size of titles: " + titles.size());
+                    for (int i = titles.size() - 3; i < titles.size(); i++) {
 
-                    if (i == titles.size() - 1)
-                        System.out.println("This is last Title: " + (i + 1));
+                        if (i == titles.size() - 1)
+                            System.out.println("This is last Title: " + (i + 1));
 
-                    if (driver.getPageSource().contains("Confirm Form Resubmission")) {
-                        driver.navigate().refresh();
-                    }
-
-                    try {
-                        titles = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("div.ln_notice_title a")));
-                        WebElement title = titles.get(i);
-                        System.out.println("Title Name is: " + title.getText());
-                        title.click();
-
-                        String pageText = driver.findElement(By.tagName("body")).getText();
-                        if (pageText.contains("GEM")) {
-                            System.out.println("Page contains GEM.");
-                        } else if (pageText.contains("EMD")) {
-                            System.out.println("Page contains EMD.");
-                        } else {
-                            System.out.println("Page doesn't contain EMD or GEM.");
-                            try {
-                                WebElement biddingDocsByViewFullNotice = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//a[contains(text(),'View full notice >>>')])[1]")));
-                                biddingDocsByViewFullNotice.click();
-                                startGettingBiddingDocs(driver, wait);
-                            } catch (Exception biddingException) {
-                                System.out.println("View full notice not found...:" + biddingException.getMessage());
-                                startGettingBiddingDocs(driver, wait);
-                            }
+                        if (driver.getPageSource().contains("Confirm Form Resubmission")) {
+                            driver.navigate().refresh();
                         }
 
-                    } catch (Exception titleException) {
-                        System.out.println("Error in processing titles: " + titleException.getMessage());
-                        driver.navigate().back();
+                        try {
+                            titles = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("div.ln_notice_title a")));
+                            WebElement title = titles.get(i);
+                            System.out.println("Title Name is: " + title.getText());
+                            title.click();
+
+                            String pageText = driver.findElement(By.tagName("body")).getText();
+                            if (pageText.contains("GEM")) {
+                                System.out.println("Page contains GEM.");
+                            } else if (pageText.contains("EMD")) {
+                                System.out.println("Page contains EMD.");
+                            } else {
+                                System.out.println("Page doesn't contain EMD or GEM.");
+                                try {
+                                    WebElement biddingDocsByViewFullNotice = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//a[contains(text(),'View full notice >>>')])[1]")));
+                                    biddingDocsByViewFullNotice.click();
+                                    startGettingBiddingDocs(driver, wait);
+                                } catch (Exception biddingException) {
+                                    System.out.println("View full notice not found...:" + biddingException.getMessage());
+                                    startGettingBiddingDocs(driver, wait);
+                                }
+                            }
+
+                        } catch (Exception titleException) {
+                            System.out.println("Error in processing titles: " + titleException.getMessage());
+                            driver.navigate().back();
+                        }
+
                     }
 
-                }
+                    driver.navigate().back();
 
-                driver.navigate().back();
-
-                List<WebElement> nextButton = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("(//img[@class='toppg_forward_active'])[1]")));
-                System.out.println("Next Button size: " + nextButton.size());
-                if (nextButton.size() > 0 && nextButton.get(0).isEnabled()) {
+                    nextButton = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//img[@class='toppg_forward_active']")));
+                    System.out.println("Next Button size: " + nextButton.size());
                     System.out.println("Next button is clicked.");
                     nextButton.get(0).click();
-                } else {
-                    hasNextPage = false;
-                }
 
 //                WebElement pageNumbers = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div[id='ntc_tbl_tools_links'] li[class='toppg-t']")));
 //                String pageNumberText = pageNumbers.getText();
@@ -122,7 +130,10 @@ public class DgMarketAutomationTest {
 //                    } else {
 //                        hasNextPage = false;
 //                    }
-//                }
+//                }}
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
 
         } catch (Exception e) {
@@ -134,16 +145,16 @@ public class DgMarketAutomationTest {
 
     private static ChromeOptions setUpChromeOptions(String folderName) {
         Map<String, Object> prefs = new HashMap<>();
-        String customFolderPath = "C:\\Users\\pzdul\\Downloads\\" + folderName;
+        String customFolderPath = "C:\\Dg Market\\" + folderName;
         File customFolder = new File(customFolderPath);
         if (!customFolder.exists()) {
             customFolder.mkdirs();
         }
         prefs.put("download.default_directory", customFolderPath);
         prefs.put("plugins.always_open_pdf_externally", true);
+        prefs.put("profile.default_content_setting_values.protocol_handlers", 2);
         prefs.put("profile.default_content_setting_values.popups", 2);
         prefs.put("profile.default_content_settings.popups", 0);
-        prefs.put("profile.default_content_setting_values.protocol_handlers", 2);
         prefs.put("safebrowsing.enabled", true);
         ChromeOptions options = new ChromeOptions();
         options.setExperimentalOption("prefs", prefs);
@@ -173,7 +184,13 @@ public class DgMarketAutomationTest {
                 downloadLinks = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//a[contains(text(),'download')]")));
                 WebElement download = downloadLinks.get(j);
                 download.click();
+
                 Thread.sleep(5000);
+
+                Robot robot = new Robot();
+                robot.keyPress(KeyEvent.VK_ESCAPE);
+                robot.keyRelease(KeyEvent.VK_ESCAPE);
+
             } catch (Exception downloadException) {
                 System.out.println("Error in downloading: " + downloadException.getMessage());
                 driver.navigate().back();
